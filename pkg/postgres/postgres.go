@@ -3,10 +3,11 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-logr/logr"
 	"log"
+
+	"github.com/go-logr/logr"
+	"github.com/lib/pq"
 )
-import "github.com/lib/pq"
 
 type PG interface {
 	CreateDB(dbname, username string) error
@@ -32,9 +33,9 @@ type pg struct {
 	args string
 }
 
-func NewPG(host, user, password, uri_args string, logger logr.Logger) (*pg, error) {
+func NewPG(host, user, password, default_database, uri_args string, logger logr.Logger) (*pg, error) {
 	return &pg{
-		db:   GetConnection(user, password, host, "", uri_args, logger),
+		db:   GetConnection(user, password, host, default_database, uri_args, logger),
 		log:  logger,
 		host: host,
 		user: user,

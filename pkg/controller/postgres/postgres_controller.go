@@ -4,12 +4,12 @@ import (
 	"context"
 	goerr "errors"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	dbv1alpha1 "github.com/movetokube/postgres-operator/pkg/apis/db/v1alpha1"
 	"github.com/movetokube/postgres-operator/pkg/postgres"
 	"github.com/movetokube/postgres-operator/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -34,7 +34,8 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	pgUser := utils.MustGetEnv("POSTGRES_USER")
 	pgPass := utils.MustGetEnv("POSTGRES_PASS")
 	pgUriArgs := utils.MustGetEnv("POSTGRES_URI_ARGS")
-	pg, err := postgres.NewPG(pgHost, pgUser, pgPass, pgUriArgs, log.WithName("postgres"))
+	pgDefaultDatabase := utils.GetEnv("POSTGRES_DEFAULT_DATABASE")
+	pg, err := postgres.NewPG(pgHost, pgUser, pgPass, pgDefaultDatabase, pgUriArgs, log.WithName("postgres"))
 	if err != nil {
 		return nil
 	}
