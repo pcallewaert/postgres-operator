@@ -42,7 +42,12 @@ func (c *pg) CreateDB(dbname, role string) error {
 		return err
 	}
 
-	_, err = c.db.Exec(fmt.Sprintf(GRANT_CREATE_TABLE, "public", role))
+	tmpDb, err := GetConnection(c.user, c.pass, c.host, dbname, c.args, c.log)
+	if err != nil {
+		return err
+	}
+	defer tmpDb.Close()
+	_, err = tmpDb.Exec(fmt.Sprintf(GRANT_CREATE_TABLE, "public", role))
 	if err != nil {
 		return err
 	}
