@@ -14,11 +14,12 @@ const (
 	ALTER_DB_OWNER       = `ALTER DATABASE "%s" OWNER TO "%s"`
 	DROP_DATABASE        = `DROP DATABASE "%s"`
 	GRANT_USAGE_SCHEMA   = `GRANT USAGE ON SCHEMA "%s" TO "%s"`
+	GRANT_CREATE_TABLE   = `GRANT CREATE ON SCHEMA "%s" TO "%s"`
 	GRANT_ALL_TABLES     = `GRANT %s ON ALL TABLES IN SCHEMA "%s" TO "%s"`
 	DEFAULT_PRIVS_SCHEMA = `ALTER DEFAULT PRIVILEGES FOR ROLE "%s" IN SCHEMA "%s" GRANT %s ON TABLES TO "%s"`
-	REVOKE_CONNECT		 = `REVOKE CONNECT ON DATABASE "%s" FROM public`
-	TERMINATE_BACKEND	 = `SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity	WHERE pg_stat_activity.datname = '%s' AND pid <> pg_backend_pid()`
-	GET_DB_OWNER	 	 = `SELECT pg_catalog.pg_get_userbyid(d.datdba) FROM pg_catalog.pg_database d WHERE d.datname = '%s'`
+	REVOKE_CONNECT       = `REVOKE CONNECT ON DATABASE "%s" FROM public`
+	TERMINATE_BACKEND    = `SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity	WHERE pg_stat_activity.datname = '%s' AND pid <> pg_backend_pid()`
+	GET_DB_OWNER         = `SELECT pg_catalog.pg_get_userbyid(d.datdba) FROM pg_catalog.pg_database d WHERE d.datname = '%s'`
 	GRANT_CREATE_SCHEMA  = `GRANT CREATE ON DATABASE "%s" TO "%s"`
 )
 
@@ -40,6 +41,12 @@ func (c *pg) CreateDB(dbname, role string) error {
 	if err != nil {
 		return err
 	}
+
+	_, err = c.db.Exec(fmt.Sprintf(GRANT_CREATE_TABLE, "public", role))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -94,7 +101,7 @@ func (c *pg) CreateExtension(db, extension string, logger logr.Logger) error {
 	return nil
 }
 
-func (c *pg) SetSchemaPrivileges(db, creator, role, schema, privs string, logger logr.Logger) error {
+func (c *pg) SetSchemaPrivileges(db, creator, role, schema, privs string, createSchema bool, logger logr.Logger) error {
 	tmpDb, err := GetConnection(c.user, c.pass, c.host, db, c.args, logger)
 	if err != nil {
 		return err
@@ -117,6 +124,13 @@ func (c *pg) SetSchemaPrivileges(db, creator, role, schema, privs string, logger
 	_, err = tmpDb.Exec(fmt.Sprintf(DEFAULT_PRIVS_SCHEMA, creator, schema, privs, role))
 	if err != nil {
 		return err
+	}
+	// Grant role usage on schema if createSchema
+	if createSchema {
+		_, err = tmpDb.Exec(fmt.Sprintf(GRANT_CREATE_TABLE, schema, role))
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

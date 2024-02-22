@@ -16,7 +16,7 @@ type PG interface {
 	CreateUserRole(role, password string) (string, error)
 	UpdatePassword(role, password string) error
 	GrantRole(role, grantee string) error
-	SetSchemaPrivileges(db, creator, role, schema, privs string, logger logr.Logger) error
+	SetSchemaPrivileges(db, creator, role, schema, privs string, createSchema bool, logger logr.Logger) error
 	RevokeRole(role, revoked string) error
 	AlterDefaultLoginRole(role, setRole string) error
 	DropDatabase(db string, logger logr.Logger) error
